@@ -90,6 +90,7 @@ public class L3D {
 	public L3D(PApplet _parent, int _side) {
 		super();
 		side=_side;
+		scale=parent.height/side/3;
 		parent = _parent;
 		parent.registerMethod("draw", this);
 		parent.registerMethod("mouseEvent", this);
@@ -118,6 +119,27 @@ public class L3D {
 		initCubeVariables();
 	}
 
+	/**
+	 * This constructor uses your spark/cubetube username and password to get an existing access token from your
+	 * account, and then streams to your core named <coreName>
+	 * 
+	 * @example Streaming
+	 * @param username
+	 * @param password
+	 * @param size
+	 */
+	public L3D(PApplet _parent, String username, String password, int _size) {
+		super();
+		side=_size;
+		parent = _parent;
+		scale=parent.height/side/3;
+		welcome();
+		parent.registerMethod("draw", this);
+		parent.registerMethod("mouseEvent", this);
+		spark = new Spark(username, password);
+		initCubeVariables();
+	}
+	
 	
 	/**
 	 * This constructor uses your spark/cubetube username and password to get an existing access token from your
@@ -217,7 +239,7 @@ public class L3D {
 		if(pose)  //translate the cube to the center and rotate it according to the mouse
 			poseCube();
 		if (drawCube) {
-			parent.stroke(255, 10);
+			parent.stroke(255, 255/(side*3));
 			for (float x = 0; x < side; x++)
 				for (float y = 0; y < side; y++)
 					for (float z = 0; z < side; z++) {
@@ -646,6 +668,11 @@ public class L3D {
 	public void enablePoseCube()
 	{
 		pose=true;
+	}
+
+	public void disablePoseCube()
+	{
+		pose=false;
 	}
 	
 	public void poseCube()
