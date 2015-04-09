@@ -41,6 +41,15 @@ public class Text {
 
 	 public void showChar(char a, PVector center, PVector pivot, PVector angle, int col)
 	 {
+
+		 for(int row=0;row<8;row++)
+			 for(int bit=0;bit<8;bit++)
+				 if(((font[((int)a+selectedFont)*8+(7-row)]>>(7-bit))&0x01)==1)
+				 		cube.setVoxel(center.x+((float)bit-pivot.x)*Math.cos(angle.y), 
+				 				center.y+((float)row-pivot.y)*Math.cos(angle.x), 
+				 				center.z+((float)row-pivot.y)*Math.sin(angle.x)+((float)bit-pivot.y)*Math.sin(angle.y), col);
+		 
+		 /*
 		 pivot.add(center);
 		 for(int row=0;row<8;row++)
 			 for(int bit=0;bit<8;bit++)
@@ -48,6 +57,7 @@ public class Text {
 				 		cube.setVoxel(center.x+((float)bit-(pivot.x-center.x))*Math.cos(angle.y), 
 				 				center.y+((float)row-(pivot.y-center.y))*Math.cos(angle.x), 
 				 				center.z+((float)row-(pivot.y-center.y))*Math.sin(angle.x)+((float)bit-(pivot.y-center.y))*Math.sin(angle.y), col);
+		 */
 		 /*
 	 		cube.setVoxel(center.x+((float)bit-pivot.x)*Math.cos(angle.y) + ((float)row-pivot.y)*Math.sin(angle.z), 
 	 				center.y+((float)row-pivot.y)*Math.cos(angle.x)+ ((float)bit-pivot.x)*Math.sin(angle.z), 
