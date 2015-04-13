@@ -34,20 +34,20 @@ public class Text {
 				 		cube.setVoxel(p.x+bit, (p.y)+(cube.side-1-row), p.z, col);
 	 }
 	 
-	 public void showChar(char a, PVector center, PVector angle, int col)
+	 public void showChar(char a, PVector origin, PVector angle, int col)
 	 {
-		 showChar(a, center, new PVector(0,0,0), angle, col);
+		 showChar(a, origin, new PVector(0,0,0), angle, col);
 	 }
 
-	 public void showChar(char a, PVector center, PVector pivot, PVector angle, int col)
+	 public void showChar(char a, PVector origin, PVector pivot, PVector angle, int col)
 	 {
 
 		 for(int row=0;row<8;row++)
 			 for(int bit=0;bit<8;bit++)
 				 if(((font[((int)a+selectedFont)*8+(7-row)]>>(7-bit))&0x01)==1)
-				 		cube.setVoxel(center.x+((float)bit-pivot.x)*Math.cos(angle.y), 
-				 				center.y+((float)row-pivot.y)*Math.cos(angle.x), 
-				 				center.z+((float)row-pivot.y)*Math.sin(angle.x)+((float)bit-pivot.y)*Math.sin(angle.y), col);
+				 		cube.setVoxel(origin.x+((float)bit-pivot.x)*Math.cos(angle.y), 
+				 				origin.y+((float)row-pivot.y)*Math.cos(angle.x), 
+				 				origin.z+((float)row-pivot.y)*Math.sin(angle.x)+((float)bit-pivot.y)*Math.sin(angle.y), col);
 		 
 		 /*
 		 pivot.add(center);
@@ -78,11 +78,21 @@ public class Text {
 			 showChar(text.charAt(i), new PVector(8*i-initialPosition.x, initialPosition.y, initialPosition.z), col);
 	 }
 	 
+	 public void marquee(String text, float pos, int col)
+	 {
+		 marquis(text, pos, col);  //fixed a spelling error
+	 }
+	 
 	 public void marquis(String text, float pos, int col)
 	 {
 		 
 		 for(int i=0;i<text.length();i++)
 			 showMarquisChar(text.charAt(i), (int)pos - 8*i, col);
+	 }
+
+	 public void showMarqueeChar(char a, int pos, int col)
+	 {
+		 showMarquisChar(a,pos,col);  //fixed a spelling error
 	 }
 
 	 public void showMarquisChar(char a, int pos, int col)

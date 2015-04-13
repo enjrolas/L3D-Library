@@ -271,7 +271,7 @@ public class L3D {
 	// updated
 	// there is a boolean flag called manualUpdate -- if it's true
 	public static void update() {
-//		stream.sendData(cube);
+		stream.sendData(cube);
 	}
 
 	public static void setVoxel(int x, int y, int z, int col) {
