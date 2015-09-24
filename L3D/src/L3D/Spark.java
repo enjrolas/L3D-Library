@@ -144,7 +144,7 @@ public class Spark {
 		System.out.println("Getting access token from Spark's API...");
 		String token=null;
 		String expiration=null, client=null;
-		String url = "https://api.spark.io/v1/access_tokens";
+		String url = "https://api.particle.io/v1/access_tokens";
 		DateTimeFormatter parser2 = ISODateTimeFormat.dateTime();
 		JSONArray allTokens = readJsonArrayFromUrl(url, username, password);
 		for (int i = 0; i < allTokens.length(); i++) {
@@ -170,9 +170,10 @@ public class Spark {
 	void loadCores() {
 		String url;
 		try {
-			url = "https://api.spark.io/v1/devices/?access_token="
+			url = "https://api.particle.io/v1/devices/?access_token="
 					+ accessToken;
 			allCores = readJsonArrayFromUrl(url);
+			//System.out.println(allCores);
 			System.out.println("Finding available cubes");
 			System.out.println("checking URL: " + url);
 			// availableCores = new ArrayList<String>();
@@ -180,12 +181,13 @@ public class Spark {
 			for (int i = 0; i < allCores.length(); i++) {
 				JSONObject core = allCores.getJSONObject(i);
 				if (core.getBoolean("connected")) {
+					try{
 					String deviceID = core.getString("id");
 					String coreName = core.getString("name");
 					JSONObject currentCore = new JSONObject();
 					currentCore.put("name", coreName);
 					currentCore.put("deviceID", deviceID);
-					String deviceURL = "https://api.spark.io/v1/devices/"
+					String deviceURL = "https://api.particle.io/v1/devices/"
 							+ deviceID + "/?access_token=" + accessToken;
 					System.out.println("getting variables for core");
 					System.out.println("checking URL: " + deviceURL);
@@ -198,15 +200,19 @@ public class Spark {
 
 					while (keys.hasNext()) {
 						String variableName = keys.next().toString();
-						String variableURL = "https://api.spark.io/v1/devices/"
+						String variableURL = "https://api.particle.io/v1/devices/"
 								+ deviceID + "/" + variableName
 								+ "/?access_token=" + accessToken;
 						System.out.println("getting value of variable "+variableName);
 						System.out.println(variableURL);
 						JSONObject variable = readJsonFromUrl(variableURL);
+
+						System.out.println(variable);
+						
 						if (activeVariables.getString(variableName).equals(
 								"string")) {
 							String value = variable.getString("result");
+							System.out.println("value:  "+value);
 							currentCore.put(variableName, value);
 						} else if (activeVariables.getString(variableName)
 								.equals("int32")) {
@@ -225,6 +231,11 @@ public class Spark {
 					availableCores.put(coreName, currentCore);
 
 					System.out.println(core.getString("name"));
+				}
+				catch(Exception e)
+				{
+					System.out.println("error getting data from core.  Maybe it's not connected and the system hadn't updated, yet.");
+				}
 				}
 			}
 		} catch (Exception e) {
@@ -246,6 +257,7 @@ public class Spark {
 			return core.getString(varName);
 		} catch (Exception e) {
 			System.out.println("that wasn't a JSON object");
+			System.out.println(e);
 			return null;
 		}
 	}

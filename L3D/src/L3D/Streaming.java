@@ -2,6 +2,7 @@ package L3D;
 
 //import UDP library
 
+
 public class Streaming {
 	public static L3D_UDP udp;  // define the UDP object
 	boolean multicast;
@@ -59,12 +60,12 @@ public class Streaming {
 	public static byte[] serializeCube(int[][][] cube)
 	{
 		  int index=0;
-		  byte[] data=new byte[(int)Math.pow(cube.length, 3)];
+		  byte[] data=new byte[cube[0][0].length*cube[0].length*cube.length];
 		  for (int z=0; z<cube[0][0].length; z++)
 		    for (int y=0; y<cube[0].length; y++)
 		      for (int x=0; x<cube.length; x++)
 		      {
-		        index=z*64+y*8+x;
+		        index=z*cube.length*cube[0].length+y*cube.length+x;
 		        data[index]=colorByte(cube[x][y][z]);
 		      }
 		 return data;

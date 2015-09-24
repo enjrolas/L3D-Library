@@ -30,6 +30,7 @@ package L3D;
 import processing.core.PApplet;
 import processing.core.PVector;
 import processing.event.MouseEvent;
+//import processing.serial.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -54,6 +55,7 @@ public class L3D {
 
 	// parent is a reference to the parent sketch
 	private static PApplet parent;
+	//public Serial serial;
 	public static Streaming stream;
 	public static Spark spark;
 	public static Text text;
@@ -61,6 +63,7 @@ public class L3D {
 	private static boolean drawCube;
 	public static int side = 8;
 	public static int size;
+	public static PVector dimensions;
 	public static int scale = 20;
 	public static double xAngle=-0.15;
 	public static double yAngle=0.39;
@@ -87,6 +90,13 @@ public class L3D {
 		parent.println(center);
 	}
 
+	/**
+	 * This constructor lets you define a cube of a custom size.  Streaming won't work out of the box with anything other than
+	 * a 8x8x8 cube -- spark cores have a problem receiving UDP data packets larger than 512 bytes, so sending larger cube data will
+	 * take some creative reformatting
+	 * 
+	 * @example Sphere
+	 */
 	public L3D(PApplet _parent, int _side) {
 		super();
 		side=_side;
@@ -96,6 +106,29 @@ public class L3D {
 		parent.registerMethod("mouseEvent", this);
 		welcome();
 		initCubeVariables();
+	}
+
+	public L3D(PApplet _parent, int x, int y, int z) {
+		super();
+		dimensions=new PVector(x,y,z);
+		if((x>=y)&&(x>=z))
+			side=x;
+		else if((y>=x)&&(y>=z))
+			side=y;
+		else if((z>=x)&&(z>=y))
+			side=z;
+		scale=parent.height/side/3;
+		parent = _parent;
+		parent.registerMethod("draw", this);
+		parent.registerMethod("mouseEvent", this);
+		welcome();
+		drawCube = true;  //draw the cube in the center of the screen by default
+		pose=true;  //enable the drag-to-rotate UI by default
+		cube = new int[(int)dimensions.x][(int)dimensions.y][(int)dimensions.z];
+		size=side;  //compatibility with JS library
+		center=new PVector(((float)dimensions.x-1)/2, ((float)dimensions.y-1)/2, ((float)dimensions.z-1)/2);
+		background(parent.color(0));
+		text=new Text(this);	
 	}
 
 	/**
@@ -191,7 +224,8 @@ public class L3D {
 		pose=true;  //enable the drag-to-rotate UI by default
 		cube = new int[side][side][side];
 		size=side;  //compatibility with JS library
-		center=new PVector(((float)size-1)/2, ((float)size-1)/2, ((float)size-1)/2);
+		dimensions=new PVector(side, side, side);
+		center=new PVector(((float)dimensions.x-1)/2, ((float)dimensions.y-1)/2, ((float)dimensions.z-1)/2);
 		background(parent.color(0));
 		text=new Text(this);	
 	}
@@ -221,7 +255,7 @@ public class L3D {
 	public static void streamToCore(int port, String name) {
 		String IPAddress = spark.getAddress(name);
 		stream = new Streaming(port, IPAddress);
-		manualUpdate = false;
+			manualUpdate = false;
 	}
 
 	public static void setManualStreaming() {
@@ -240,11 +274,11 @@ public class L3D {
 			poseCube();
 		if (drawCube) {
 			parent.stroke(255, 255/(side*3));
-			for (float x = 0; x < side; x++)
-				for (float y = 0; y < side; y++)
-					for (float z = 0; z < side; z++) {
+			for (float x = 0; x < dimensions.x; x++)
+				for (float y = 0; y < dimensions.y; y++)
+					for (float z = 0; z < dimensions.z; z++) {
 						parent.pushMatrix();
-						parent.translate(scale*(x-center.x), scale*(((float)size-1-y)-center.y), scale*(z-center.z));					
+						parent.translate(scale*(x-center.x), scale*(((float)dimensions.y-1-y)-center.y), scale*(z-center.z));					
 						if (parent.brightness(cube[(int)x][(int)y][(int)z]) != 0)
 							parent.fill(cube[(int)x][(int)y][(int)z]);
 						else
@@ -258,7 +292,7 @@ public class L3D {
 			parent.stroke(255, 40);
 			parent.strokeWeight(5);
 			parent.translate(center.x, center.y, center.z);
-			parent.box(scale*side);
+			parent.box(scale*dimensions.x,scale*dimensions.y,scale*dimensions.z);
 			parent.popStyle();
 			parent.popMatrix();
 		}
@@ -275,42 +309,26 @@ public class L3D {
 	}
 
 	public static void setVoxel(int x, int y, int z, int col) {
-		if ((x >= 0) && (x < side))
-			if ((y >= 0) && (y < side))
-				if ((z >= 0) && (z < side))
+		if ((x >= 0) && (x < dimensions.x))
+			if ((y >= 0) && (y < dimensions.y))
+				if ((z >= 0) && (z < dimensions.z))
 					cube[x][y][z] = col;
 	}
 	
 	public static void setVoxel(double x, double y, double z, int col) {
-		x = Math.round(x);
-		y = Math.round(y);
-		z = Math.round(z);
-		if ((x >= 0) && (x < side))
-			if ((y >= 0) && (y < side))
-				if ((z >= 0) && (z < side))
-					cube[(int) x][(int) y][(int) z] = col;
+		setVoxel((int)x,(int)y,(int)z,col);
 	}
 	
 	public static void setVoxel(int x, int y, int z, int r, int g, int b) {
-		if ((x >= 0) && (x < side))
-			if ((y >= 0) && (y < side))
-				if ((z >= 0) && (z < side))
-					cube[x][y][z] = parent.color(r, g, b);
+		setVoxel(x,y,z,parent.color(r, g, b));
 	}
 
 	public static void setVoxel(PVector p, int col) {
-		if ((p.x >= 0) && (p.x < side))
-			if ((p.y >= 0) && (p.y < side))
-				if ((p.z >= 0) && (p.z < side))
-					cube[(int) p.x][(int) p.y][(int) p.z] = col;
+		setVoxel((int)p.x,(int)p.y,(int)p.z, col);
 	}
 
 	public static void setVoxel(PVector p, int r, int g, int b) {
-		if ((p.x >= 0) && (p.x < side))
-			if ((p.y >= 0) && (p.y < side))
-				if ((p.z >= 0) && (p.z < side))
-					cube[(int) p.x][(int) p.y][(int) p.z] = parent.color(r, g,
-							b);
+		setVoxel((int)p.x,(int)p.y,(int)p.z, parent.color(r,g,b));
 	}
 
 	//adds the color col to the existing voxel color
@@ -318,9 +336,9 @@ public class L3D {
 		x = Math.round(x);
 		y = Math.round(y);
 		z = Math.round(z);
-		if ((x >= 0) && (x < side))
-			if ((y >= 0) && (y < side))
-				if ((z >= 0) && (z < side))
+		if ((x >= 0) && (x < dimensions.x))
+			if ((y >= 0) && (y < dimensions.y))
+				if ((z >= 0) && (z < dimensions.z))
 				{
 					int r, g, b;
 					int currentColor=cube[(int) x][(int) y][(int) z];
@@ -415,9 +433,9 @@ public class L3D {
 			writer = new BufferedWriter(new FileWriter(logFile));
 			writer.write(side + "X" + side + "X" + side + "\n");
 			writer.write("format:ascii\n");
-			for (int x = 0; x < side; x++)
-				for (int y = 0; y < side; y++)
-					for (int z = 0; z < side; z++)
+			for (int x = 0; x < dimensions.x; x++)
+				for (int y = 0; y < dimensions.y; y++)
+					for (int z = 0; z < dimensions.z; z++)
 						writer.write((int) parent.red(cube[x][y][z]) + ","
 								+ (int) parent.green(cube[x][y][z]) + ","
 								+ (int) parent.blue(cube[x][y][z]) + ":");
@@ -447,11 +465,11 @@ public class L3D {
 				System.out.println("saving to " + logFile.getCanonicalPath());
 
 				writer = new BufferedWriter(new FileWriter(logFile));
-				writer.write(side + "X" + side + "X" + side + "\n");
+				writer.write(dimensions.x + "X" + dimensions.y + "X" + dimensions.z + "\n");
 				writer.write("format:binary\n");
-				for (int x = 0; x < side; x++)
-					for (int y = 0; y < side; y++)
-						for (int z = 0; z < side; z++) {
+				for (int x = 0; x < dimensions.x; x++)
+					for (int y = 0; y < dimensions.y; y++)
+						for (int z = 0; z < dimensions.z; z++) {
 							byte[] colorBytes = colorBytes(cube[x][y][z]);
 							for (int i = 0; i < 3; i++)
 								writer.write(colorBytes[i]);
@@ -513,11 +531,11 @@ public class L3D {
 						String[] colorStrings=voxels[i].split(",");
 						cube[x][y][z]=parent.color(Integer.parseInt(colorStrings[0]), Integer.parseInt(colorStrings[1]), Integer.parseInt(colorStrings[2]));
 						x++;
-						if(x>=side)
+						if(x>=dimensions.x)
 						{
 							y++;
 							x=0;
-							if(y>=side)
+							if(y>=dimensions.y)
 							{
 								z++;
 								y=0;
@@ -648,16 +666,16 @@ public class L3D {
 	}
 
 	public static void background(int col) {
-		for (int x = 0; x < side; x++)
-			for (int y = 0; y < side; y++)
-				for (int z = 0; z < side; z++)
+		for (int x = 0; x < dimensions.x; x++)
+			for (int y = 0; y < dimensions.y; y++)
+				for (int z = 0; z < dimensions.z; z++)
 					cube[x][y][z] = col;
 	}
 
 	// returns the color (represented as an int) at the integer location closest
 	// to the PVector point
 	public static int getVoxel(PVector p) {
-		return cube[(int) p.x][(int) p.y][(int) p.z];
+		return getVoxel((int) p.x,(int) p.y,(int) p.z);
 	}
 
 	// returns the color (represented as an int) at the x,y,z location
@@ -748,5 +766,17 @@ public class L3D {
 	public static String version() {
 		return VERSION;
 	}
+/*
+	public void serialEvent(Serial p) { 
+		  char a=p.readChar(); 
+		  if (a==22)  //the character the cube uses to call for a new frame
+		  {
+			  byte[] data=stream.serializeCube(cube);
+			  for(int i=0;i<data.length;i++)
+			    serial.write(data[i]);
+			  
+		  }
+		}
+		*/
 
 }
